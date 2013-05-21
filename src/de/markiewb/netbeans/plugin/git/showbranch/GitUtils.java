@@ -22,7 +22,7 @@ import org.openide.util.Exceptions;
  */
 public class GitUtils {
 
-    public static GitBranch getActiveBranch(final FileObject f) {
+    public static Collection<GitBranch> getBranches(final FileObject f, boolean localAndRemoteBranches) {
         final FileObject gitRepoDirectory = getGitRepoDirectory(f);
         if (null == gitRepoDirectory) {
             return null;
@@ -32,17 +32,20 @@ public class GitUtils {
         try {
             client = repo.createClient();
             ProgressMonitor progressMonitor = new ProgressMonitor.DefaultProgressMonitor();
-            final Collection<GitBranch> localBranches = client.getBranches(false, progressMonitor).values();
-            for (GitBranch branch : localBranches) {
-                if (branch.isActive()) {
-                    return branch;
-                }
-            }
+            return client.getBranches(localAndRemoteBranches, progressMonitor).values();
         } catch (GitException ex) {
             Exceptions.printStackTrace(ex);
         } finally {
             if (null != client) {
                 client.release();
+            }
+        }
+        return null;
+    }
+    public static GitBranch getActiveBranch(final FileObject f) {
+        for (GitBranch branch : getBranches(f, true)) {
+            if (branch.isActive()) {
+                return branch;
             }
         }
         return null;
